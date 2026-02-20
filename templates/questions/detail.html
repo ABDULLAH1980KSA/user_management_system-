@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ question.title }} – مدرسة الشقيق الابتدائية{% endblock %}
+
+{% block content %}
+
+<!-- شريط التطبيق العلوي -->
+<header class="app-header no-print">
+    <span class="app-icon">📄</span>
+    <span class="app-title">{{ question.title }} — مدرسة الشقيق الابتدائية بنين</span>
+    <div class="header-actions">
+        <a href="{% url 'question_list' %}" class="btn-header">📋 قائمة الأسئلة</a>
+        <a href="{% url 'question_edit' question.pk %}" class="btn-header">✏️ تعديل</a>
+        <button class="btn-header" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+</header>
+
+<!-- منطقة المحتوى -->
+<div class="pages-container">
+    <div class="editor-page">
+
+        <!-- بيانات السؤال -->
+        <div class="question-meta no-print" style="border-bottom:2px solid #2b579a;padding-bottom:12px;margin-bottom:20px;grid-template-columns:1fr 1fr 1fr;">
+            <div class="meta-field">
+                <label>المادة</label>
+                <div style="padding:6px 10px;background:#f0f4fa;border-radius:4px;font-size:13px;">📚 {{ question.get_subject_display }}</div>
+            </div>
+            <div class="meta-field">
+                <label>الصف</label>
+                <div style="padding:6px 10px;background:#f0f4fa;border-radius:4px;font-size:13px;">🎓 {{ question.get_grade_display }}</div>
+            </div>
+            <div class="meta-field">
+                <label>تاريخ الإنشاء</label>
+                <div style="padding:6px 10px;background:#f0f4fa;border-radius:4px;font-size:13px;">📅 {{ question.created_at|date:"Y/m/d H:i" }}</div>
+            </div>
+        </div>
+
+        <!-- عنوان السؤال -->
+        <div class="question-title" style="font-size:20px;font-weight:700;color:#2b579a;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #e0e0e0;">
+            {{ question.title }}
+        </div>
+
+        <!-- محتوى السؤال -->
+        <div class="question-content ck-content" style="font-size:14pt;line-height:1.8;direction:rtl;text-align:right;">
+            {{ question.content|safe }}
+        </div>
+
+    </div>
+</div>
+
+<!-- شريط الحالة -->
+<div class="status-bar no-print">
+    <div class="status-left">
+        <span class="status-item">🏫 مدرسة الشقيق الابتدائية بنين</span>
+    </div>
+    <div class="status-right">
+        <span class="status-item">الصفحة 1</span>
+        <span class="status-item">العربية</span>
+    </div>
+</div>
+
+{% endblock %}

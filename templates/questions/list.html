@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}قائمة الأسئلة – مدرسة الشقيق الابتدائية{% endblock %}
+
+{% block content %}
+
+<!-- شريط التطبيق العلوي -->
+<header class="app-header">
+    <span class="app-icon">🏫</span>
+    <span class="app-title">مدرسة الشقيق الابتدائية بنين — نظام إدارة الأسئلة</span>
+    <div class="header-actions">
+        <a href="{% url 'question_create' %}" class="btn-header">✏️ سؤال جديد</a>
+        <a href="/admin/" class="btn-header">⚙️ الإدارة</a>
+    </div>
+</header>
+
+<!-- منطقة المحتوى -->
+<div class="pages-container" style="padding:30px 20px;">
+    <div style="max-width:860px;width:100%;margin:0 auto;">
+
+        <!-- عنوان الصفحة -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <div class="page-title" style="margin:0;">
+                <span>📋</span>
+                <span>الأسئلة المحفوظة</span>
+            </div>
+            <a href="{% url 'question_create' %}" class="btn-primary" style="text-decoration:none;padding:10px 22px;font-size:14px;border-radius:5px;display:inline-flex;align-items:center;gap:6px;">
+                ✏️ إنشاء سؤال جديد
+            </a>
+        </div>
+
+        <!-- قائمة الأسئلة أو الحالة الفارغة -->
+        {% if questions %}
+            {% for q in questions %}
+            <div class="question-card">
+                <div class="q-info">
+                    <h3>{{ q.title }}</h3>
+                    <div class="q-meta">
+                        <span>📚 {{ q.get_subject_display }}</span>
+                        <span>🎓 {{ q.get_grade_display }}</span>
+                        <span>📅 {{ q.created_at|date:"Y/m/d" }}</span>
+                    </div>
+                </div>
+                <div class="q-actions">
+                    <a href="{% url 'question_detail' q.pk %}" class="btn-action btn-view">👁️ عرض</a>
+                    <a href="{% url 'question_edit' q.pk %}" class="btn-action btn-edit">✏️ تعديل</a>
+                    <form method="post" action="{% url 'question_delete' q.pk %}" style="display:inline;"
+                          onsubmit="return confirm('هل أنت متأكد من حذف هذا السؤال؟')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-action btn-delete">🗑️ حذف</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="editor-page" style="min-height:auto;text-align:center;padding:60px 40px;">
+                <div style="font-size:70px;margin-bottom:16px;">📝</div>
+                <p style="font-size:17px;color:#555;margin-bottom:24px;">لا توجد أسئلة بعد. ابدأ بإنشاء سؤال جديد!</p>
+                <a href="{% url 'question_create' %}" class="btn-primary" style="text-decoration:none;padding:12px 28px;font-size:15px;border-radius:5px;display:inline-flex;align-items:center;gap:8px;">
+                    ✏️ إنشاء أول سؤال
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- شريط الحالة -->
+<div class="status-bar">
+    <div class="status-left">
+        <span class="status-item">🏫 مدرسة الشقيق الابتدائية بنين</span>
+    </div>
+    <div class="status-right">
+        <span class="status-item">إجمالي الأسئلة: <strong>{{ questions|length }}</strong></span>
+        <span class="status-item">العربية</span>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ question.title }} – مدرسة الشقيق الابتدائية{% endblock %}
+
+{% block content %}
+<div class="question-detail-page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;" class="no-print">
+        <a href="{% url 'question_list' %}" style="color:#2b579a;text-decoration:none;font-size:14px;">
+            ← العودة إلى القائمة
+        </a>
+        <div style="display:flex;gap:8px;">
+            <a href="{% url 'question_edit' question.pk %}" class="btn-action btn-edit">✏️ تعديل</a>
+            <button onclick="window.print()" class="btn-action btn-view">🖨️ طباعة</button>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="question-title">{{ question.title }}</div>
+        <div style="font-size:12px;color:#888;margin-bottom:20px;display:flex;gap:16px;" class="no-print">
+            <span>📚 {{ question.get_subject_display }}</span>
+            <span>🎓 {{ question.get_grade_display }}</span>
+            <span>📅 {{ question.created_at|date:"Y/m/d H:i" }}</span>
+        </div>
+        <div class="question-content ck-content">
+            {{ question.content|safe }}
+        </div>
+    </div>
+</div>
+{% endblock %}

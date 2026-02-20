@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if question %}تعديل سؤال{% else %}إنشاء سؤال جديد{% endif %} – مدرسة الشقيق الابتدائية
+{% endblock %}
+
+{% block extra_head %}
+    <!-- CKEditor 5 Classic Build عبر CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+    <!-- CKEditor 5 Translations (Arabic) -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/translations/ar.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== شريط التطبيق العلوي ===== -->
+<header class="app-header no-print">
+    <span class="app-icon">📝</span>
+    <span class="app-title">
+        {% if question %}تعديل: {{ question.title }}{% else %}سؤال جديد{% endif %}
+        — مدرسة الشقيق الابتدائية بنين
+    </span>
+    <div class="header-actions">
+        <a href="{% url 'question_list' %}" class="btn-header">📋 قائمة الأسئلة</a>
+        <button class="btn-header" onclick="saveForm()">💾 حفظ</button>
+        <button class="btn-header" onclick="printPreview()">🖨️ طباعة</button>
+        <button class="btn-header" onclick="toggleFullscreen()">⛶ ملء الشاشة</button>
+    </div>
+</header>
+
+<!-- ===== شريط أدوات Ribbon ===== -->
+<div class="ribbon-wrapper no-print">
+
+    <!-- تبويبات الـ Ribbon -->
+    <div class="ribbon-tabs">
+        <button class="ribbon-tab active" data-panel="panel-home">الصفحة الرئيسية</button>
+        <button class="ribbon-tab" data-panel="panel-insert">إدراج</button>
+        <button class="ribbon-tab" data-panel="panel-paragraph">فقرة</button>
+        <button class="ribbon-tab" data-panel="panel-styles">أنماط</button>
+        <button class="ribbon-tab" data-panel="panel-tools">أدوات</button>
+    </div>
+
+    <!-- ===== لوحة: الصفحة الرئيسية ===== -->
+    <div class="ribbon-content ribbon-panel" id="panel-home">
+
+        <!-- قسم التراجع/إعادة -->
+        <div class="ribbon-section">
+            <button class="ribbon-btn" onclick="execUndo()" title="تراجع (Ctrl+Z)">
+                <span class="btn-icon">↩</span>
+                <span class="btn-label">تراجع</span>
+            </button>
+            <button class="ribbon-btn" onclick="execRedo()" title="إعادة (Ctrl+Y)">
+                <span class="btn-icon">↪</span>
+                <span class="btn-label">إعادة</span>
+            </button>
+        </div>
+
+        <!-- قسم الخط -->
+        <div class="ribbon-section">
+            <!-- قائمة الخطوط -->
+            <select class="ribbon-select font-name-select" onchange="changeFontFamily(this.value)" title="نوع الخط">
+                <option value="">الخط الافتراضي</option>
+                <option value="Cairo, sans-serif">Cairo</option>
+                <option value="Amiri, serif">Amiri</option>
+                <option value="Tajawal, sans-serif">Tajawal</option>
+                <option value="Scheherazade New, serif">Scheherazade</option>
+                <option value="IBM Plex Sans Arabic, sans-serif">IBM Plex Arabic</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="Times New Roman, serif">Times New Roman</option>
+                <option value="Courier New, monospace">Courier New</option>
+            </select>
+
+            <!-- حجم الخط -->
+            <select class="ribbon-select font-size-select" onchange="changeFontSize(this.value)" title="حجم الخط">
+                <option value="">حجم</option>
+                {% for size in font_sizes %}
+                <option value="{{ size }}">{{ size }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- قسم التنسيق -->
+        <div class="ribbon-section">
+            <button id="btn-bold" class="ribbon-btn" onclick="execBold()" title="غامق (Ctrl+B)">
+                <span class="btn-icon" style="font-weight:bold;">ب</span>
+                <span class="btn-label">غامق</span>
+            </button>
+            <button id="btn-italic" class="ribbon-btn" onclick="execItalic()" title="مائل (Ctrl+I)">
+                <span class="btn-icon" style="font-style:italic;">م</span>
+                <span class="btn-label">مائل</span>
+            </button>
+            <button id="btn-underline" class="ribbon-btn" onclick="execUnderline()" title="تحته خط (Ctrl+U)">
+                <span class="btn-icon" style="text-decoration:underline;">س</span>
+                <span class="btn-label">تسطير</span>
+            </button>
+            <button id="btn-strikethrough" class="ribbon-btn" onclick="execStrikethrough()" title="يتوسطه خط">
+                <span class="btn-icon" style="text-decoration:line-through;">ح</span>
+                <span class="btn-label">شطب</span>
+            </button>
+            <button class="ribbon-btn" onclick="execRemoveFormat()" title="مسح التنسيق">
+                <span class="btn-icon">🚫</span>
+                <span class="btn-label">مسح</span>
+            </button>
+        </div>
+
+        <!-- قسم المحاذاة -->
+        <div class="ribbon-section">
+            <button class="ribbon-btn" onclick="execAlignment('right')" title="محاذاة يميناً">
+                <span class="btn-icon">⬜▰▰▰</span>
+                <span class="btn-label">يمين</span>
+            </button>
+            <button class="ribbon-btn" onclick="execAlignment('center')" title="محاذاة وسطاً">
+                <span class="btn-icon">≡</span>
+                <span class="btn-label">وسط</span>
+            </button>
+            <button class="ribbon-btn" onclick="execAlignment('left')" title="محاذاة يساراً">
+                <span class="btn-icon">▰▰▰⬜</span>
+                <span class="btn-label">يسار</span>
+            </button>
+            <button class="ribbon-btn" onclick="execAlignment('justify')" title="ضبط">
+                <span class="btn-icon">☰</span>
+                <span class="btn-label">ضبط</span>
+            </button>
+        </div>
+
+        <!-- قسم القوائم والمسافة البادئة -->
+        <div class="ribbon-section">
+            <button id="btn-bulletedList" class="ribbon-btn" onclick="execBulletedList()" title="قائمة نقطية">
+                <span class="btn-icon">•≡</span>
+                <span class="btn-label">نقطي</span>
+            </button>
+            <button id="btn-numberedList" class="ribbon-btn" onclick="execNumberedList()" title="قائمة مرقمة">
+                <span class="btn-icon">1≡</span>
+                <span class="btn-label">مرقم</span>
+            </button>
+            <button class="ribbon-btn" onclick="execOutdent()" title="تقليل المسافة البادئة">
+                <span class="btn-icon">⇤</span>
+                <span class="btn-label">تقليل</span>
+            </button>
+            <button class="ribbon-btn" onclick="execIndent()" title="زيادة المسافة البادئة">
+                <span class="btn-icon">⇥</span>
+                <span class="btn-label">زيادة</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== لوحة: إدراج ===== -->
+    <div class="ribbon-content ribbon-panel hidden" id="panel-insert">
+        <div class="ribbon-section">
+            <button class="ribbon-btn" onclick="openImageModal()" title="إدراج صورة">
+                <span class="btn-icon">🖼️</span>
+                <span class="btn-label">صورة</span>
+            </button>
+            <button class="ribbon-btn" onclick="openTableModal()" title="إدراج جدول">
+                <span class="btn-icon">🗃️</span>
+                <span class="btn-label">جدول</span>
+            </button>
+            <button class="ribbon-btn" onclick="openLinkModal()" title="إدراج رابط">
+                <span class="btn-icon">🔗</span>
+                <span class="btn-label">رابط</span>
+            </button>
+            <button class="ribbon-btn" onclick="insertHorizontalLine()" title="خط أفقي">
+                <span class="btn-icon">➖</span>
+                <span class="btn-label">خط</span>
+            </button>
+        </div>
+
+        <div class="ribbon-section">
+            <span style="font-size:11px;color:#666;align-self:flex-start;padding-top:4px;">رموز رياضية:</span>
+            {% for sym in math_symbols %}
+            <button class="ribbon-btn" onclick="insertMathSymbol('{{ sym }}')" title="{{ sym }}" style="min-width:32px;font-size:15px;">{{ sym }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ===== لوحة: فقرة ===== -->
+    <div class="ribbon-content ribbon-panel hidden" id="panel-paragraph">
+        <div class="ribbon-section">
+            <label style="font-size:12px;color:#555;">تباعد الأسطر:</label>
+            <select class="ribbon-select" onchange="changeLineSpacing(this.value)" title="تباعد الأسطر">
+                <option value="1">1.0</option>
+                <option value="1.15" selected>1.15</option>
+                <option value="1.5">1.5</option>
+                <option value="2">2.0</option>
+                <option value="2.5">2.5</option>
+                <option value="3">3.0</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ===== لوحة: أنماط ===== -->
+    <div class="ribbon-content ribbon-panel hidden" id="panel-styles">
+        <div class="ribbon-section">
+            <button class="ribbon-btn" onclick="changeHeading('paragraph')" style="min-width:80px;">
+                <span style="font-size:12px;">فقرة عادية</span>
+            </button>
+            <button class="ribbon-btn" onclick="changeHeading('heading1')" style="min-width:80px;">
+                <span style="font-size:18px;font-weight:700;">عنوان 1</span>
+            </button>
+            <button class="ribbon-btn" onclick="changeHeading('heading2')" style="min-width:80px;">
+                <span style="font-size:16px;font-weight:600;">عنوان 2</span>
+            </button>
+            <button class="ribbon-btn" onclick="changeHeading('heading3')" style="min-width:80px;">
+                <span style="font-size:14px;font-weight:600;">عنوان 3</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== لوحة: أدوات ===== -->
+    <div class="ribbon-content ribbon-panel hidden" id="panel-tools">
+        <div class="ribbon-section">
+            <button class="ribbon-btn" onclick="openFindReplace()" title="بحث واستبدال (Ctrl+H)">
+                <span class="btn-icon">🔍</span>
+                <span class="btn-label">بحث</span>
+            </button>
+            <button class="ribbon-btn" onclick="printPreview()" title="طباعة (Ctrl+P)">
+                <span class="btn-icon">🖨️</span>
+                <span class="btn-label">طباعة</span>
+            </button>
+            <button class="ribbon-btn" onclick="toggleFullscreen()" title="ملء الشاشة">
+                <span class="btn-icon">⛶</span>
+                <span class="btn-label">ملء الشاشة</span>
+            </button>
+        </div>
+    </div>
+</div><!-- /ribbon-wrapper -->
+
+<!-- ===== مسطرة أفقية ===== -->
+<div class="ruler-horizontal no-print">
+    <div class="ruler-marks"></div>
+</div>
+
+<!-- ===== منطقة الصفحات (المحرر) ===== -->
+<div class="pages-container">
+    <div class="editor-page">
+
+        <!-- بيانات السؤال -->
+        <form id="question-form" method="post">
+            {% csrf_token %}
+            <!-- حقل مخفي لمعرف السؤال (للحفظ التلقائي) -->
+            <input type="hidden" id="question-id" value="{% if question %}{{ question.pk }}{% else %}draft{% endif %}">
+
+            <div class="question-meta no-print">
+                <div class="meta-field">
+                    <label for="id_title">عنوان السؤال</label>
+                    <input type="text" id="id_title" name="title" required
+                           placeholder="أدخل عنوان السؤال..."
+                           value="{% if question %}{{ question.title }}{% endif %}">
+                </div>
+                <div class="meta-field">
+                    <label for="id_subject">المادة</label>
+                    <select id="id_subject" name="subject">
+                        {% for value, label in subjects %}
+                        <option value="{{ value }}"
+                            {% if question and question.subject == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="meta-field">
+                    <label for="id_grade">الصف</label>
+                    <select id="id_grade" name="grade">
+                        {% for value, label in grades %}
+                        <option value="{{ value }}"
+                            {% if question and question.grade == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- محتوى السؤال (CKEditor) -->
+            <div class="ck-editor-container">
+                <textarea id="ckeditor" name="content">{% if question %}{{ question.content }}{% endif %}</textarea>
+            </div>
+        </form>
+
+    </div><!-- /editor-page -->
+</div><!-- /pages-container -->
+
+<!-- ===== شريط الحالة ===== -->
+<div class="status-bar no-print">
+    <div class="status-left">
+        <div class="autosave-indicator">
+            <div class="autosave-dot"></div>
+            <span id="autosave-label">يحفظ تلقائياً</span>
+        </div>
+    </div>
+    <div class="status-right">
+        <span class="status-item">الكلمات: <strong id="word-count">0</strong></span>
+        <span class="status-item">الأحرف: <strong id="char-count">0</strong></span>
+        <span class="status-item">الصفحة 1</span>
+        <span class="status-item">العربية</span>
+    </div>
+</div>
+
+<!-- ================================================
+     النوافذ المنبثقة (Modals)
+     ================================================ -->
+
+<!-- نافذة إدراج صورة -->
+<div id="image-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>🖼️ إدراج صورة</h3>
+        <div class="form-group">
+            <label>رابط الصورة (URL)</label>
+            <input type="url" id="image-url-input" placeholder="https://...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('image-modal')">إلغاء</button>
+            <button class="btn-primary" onclick="insertImageFromUrl()">إدراج</button>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة إدراج جدول -->
+<div id="table-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>🗃️ إدراج جدول</h3>
+        <div class="form-group">
+            <label>عدد الصفوف</label>
+            <input type="number" id="table-rows" value="3" min="1" max="20">
+        </div>
+        <div class="form-group">
+            <label>عدد الأعمدة</label>
+            <input type="number" id="table-cols" value="3" min="1" max="10">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('table-modal')">إلغاء</button>
+            <button class="btn-primary" onclick="insertTable()">إدراج</button>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة إدراج رابط -->
+<div id="link-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3>🔗 إدراج رابط</h3>
+        <div class="form-group">
+            <label>الرابط (URL)</label>
+            <input type="url" id="link-url-input" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>نص الرابط (اختياري)</label>
+            <input type="text" id="link-text-input" placeholder="نص الرابط...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('link-modal')">إلغاء</button>
+            <button class="btn-primary" onclick="insertLink()">إدراج</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/ckeditor_init.js' %}"></script>
+{% endblock %}

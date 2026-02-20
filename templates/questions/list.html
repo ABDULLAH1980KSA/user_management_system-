@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}قائمة الأسئلة – مدرسة الشقيق الابتدائية{% endblock %}
+
+{% block content %}
+<div class="question-list-page">
+    <div class="page-title">
+        <span>📋</span>
+        <span>الأسئلة المحفوظة</span>
+    </div>
+
+    <div style="margin-bottom:20px;">
+        <a href="{% url 'question_create' %}" class="btn-action btn-edit" style="padding:10px 20px;font-size:14px;">
+            ✏️ إنشاء سؤال جديد
+        </a>
+    </div>
+
+    {% if questions %}
+        {% for q in questions %}
+        <div class="question-card">
+            <div class="q-info">
+                <h3>{{ q.title }}</h3>
+                <div class="q-meta">
+                    <span>📚 {{ q.get_subject_display }}</span>
+                    <span>🎓 {{ q.get_grade_display }}</span>
+                    <span>📅 {{ q.created_at|date:"Y/m/d" }}</span>
+                </div>
+            </div>
+            <div class="q-actions">
+                <a href="{% url 'question_detail' q.pk %}" class="btn-action btn-view">👁️ عرض</a>
+                <a href="{% url 'question_edit' q.pk %}" class="btn-action btn-edit">✏️ تعديل</a>
+                <form method="post" action="{% url 'question_delete' q.pk %}" style="display:inline;"
+                      onsubmit="return confirm('هل أنت متأكد من حذف هذا السؤال؟')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action btn-delete">🗑️ حذف</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align:center;padding:60px;color:#888;font-size:16px;">
+            <div style="font-size:60px;margin-bottom:16px;">📝</div>
+            <p>لا توجد أسئلة بعد. ابدأ بإنشاء سؤال جديد!</p>
+            <a href="{% url 'question_create' %}" class="btn-primary" style="display:inline-block;margin-top:16px;text-decoration:none;">
+                ✏️ إنشاء أول سؤال
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
